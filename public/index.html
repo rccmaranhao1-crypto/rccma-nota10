@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RCC Maranhão • Início</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body data-page="home">
+  <header class="topbar">
+    <div class="inner">
+      <a class="brand" href="/">
+        <div class="logo">R</div>
+        <div class="txt">
+          <strong>RCC MARANHÃO</strong>
+          <span>Portal do Meu Grupo de Oração</span>
+        </div>
+      </a>
+
+      <nav class="nav">
+        <a href="/" class="active">Início</a>
+        <a href="/rcc.html">A RCC</a>
+        <a href="/meugo.html">Meu GO Nota 10</a>
+        <a href="/campanhas.html">Campanhas</a>
+        <a href="/loja.html">Loja</a>
+        <a href="/sou.html">Sou Carismático</a>
+        <a href="/admin.html">Admin</a>
+      </nav>
+
+      <div class="actions">
+        <a class="btn light" id="btnLogin" href="/sou.html">Entrar</a>
+        <button class="btn" id="btnLogout" style="display:none">Sair</button>
+        <button class="hamburger" id="hamburger">☰</button>
+      </div>
+    </div>
+    <div class="mobileMenu" id="mobileMenu">
+      <a href="/">Início</a>
+      <a href="/rcc.html">A RCC</a>
+      <a href="/meugo.html">Meu GO Nota 10</a>
+      <a href="/campanhas.html">Campanhas</a>
+      <a href="/loja.html">Loja</a>
+      <a href="/sou.html">Sou Carismático</a>
+      <a href="/admin.html">Admin</a>
+    </div>
+  </header>
+
+  <main class="container">
+    
+<div class="card hero">
+  <div>
+    <h1><span class="grad" id="pageTitle">Início</span></h1>
+    <p id="pageBody">Carregando conteúdo...</p>
+    <div style="height:14px"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn primary" href="/sou.html">Sou Carismático</a>
+      <a class="btn" href="/meugo.html">Meu GO Nota 10</a>
+      <a class="btn" href="/campanhas.html">Campanhas</a>
+    </div>
+  </div>
+  <div class="card kpis">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div>
+        <div style="font-weight:900">Status do sistema</div>
+        <div class="small" style="margin-top:8px">
+          <span class="dot"></span>
+          <span id="statusText" style="margin-left:8px">Checando...</span>
+        </div>
+      </div>
+      <div class="badge">RCC</div>
+    </div>
+    <div style="height:10px"></div>
+    <div class="small">Dica: em produção (Railway), conecte o Postgres via <b>DATABASE_URL</b>.</div>
+  </div>
+</div>
+
+<div class="grid3">
+  <div class="card mod">
+    <div class="small">Seção</div>
+    <h3>Links rápidos</h3>
+    <p>Acesse rapidamente as áreas mais importantes do portal.</p>
+  </div>
+  <div class="card mod">
+    <div class="small">Destaques</div>
+    <h3>Comunicados & Eventos</h3>
+    <p>Espaço para avisos, eventos e notícias do movimento.</p>
+  </div>
+  <div class="card mod">
+    <div class="small">Sistema</div>
+    <h3>Área Administrativa</h3>
+    <p>Perfis: Comunicação e Tesoureiro (controlados pelo Admin Master).</p>
+  </div>
+</div>
+
+  </main>
+
+  <footer class="footer">RCC Maranhão • Plataforma 2.0 • v2</footer>
+  <script src="/app.js"></script>
+</body>
+</html>
