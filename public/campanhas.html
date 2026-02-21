@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Campanhas • RCC MARANHÃO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div id="topbar"></div>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold">Campanhas</h1>
+          <p class="mt-2 text-slate-600">
+            Crie e gerencie campanhas de rifas com cotas e controle por vendedor. (Pagamento PagBank será integrado depois.)
+          </p>
+        </div>
+        <a href="/admin" class="inline-flex px-4 py-2 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-800">
+          Área Admin
+        </a>
+      </div>
+
+      <div class="mt-6 grid gap-4" id="campaignList"></div>
+
+      <div class="mt-8 hidden" id="campaignDetail">
+        <div class="border-t pt-6">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h2 id="cTitle" class="text-2xl font-bold"></h2>
+              <p id="cDesc" class="text-slate-600 mt-1"></p>
+              <p class="text-sm text-slate-500 mt-2">Escolha uma cota e selecione o vendedor responsável pela venda.</p>
+            </div>
+            <button class="px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50" onclick="closeCampaign()">Voltar</button>
+          </div>
+
+          <div class="mt-4 grid md:grid-cols-3 gap-4">
+            <div class="md:col-span-2">
+              <div id="quotaGrid" class="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2"></div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl border border-slate-200 p-5">
+              <h3 class="font-bold">Compra</h3>
+              <label class="block text-sm mt-3">Vendedor</label>
+              <select id="sellerSelect" class="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 bg-white"></select>
+              <label class="block text-sm mt-3">Cota escolhida</label>
+              <input id="quotaSelected" disabled class="mt-1 w-full px-3 py-2 rounded-xl border border-slate-200 bg-white" placeholder="Selecione uma cota" />
+              <button id="reserveBtn" class="mt-4 w-full px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-500 disabled:opacity-50" disabled>
+                Reservar (pagamento depois)
+              </button>
+              <p id="reserveMsg" class="mt-3 text-sm text-slate-600"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div id="footer"></div>
+  <script src="/app.js"></script>
+  <script>
+    renderTopbar("campanhas"); renderFooter();
+
+    let currentCampaignId = null;
+    let selectedQuota = null;
+
+    function closeCampaign(){
+      currentCampaignId = null;
+      selectedQuota = null;
+      document.getElementById("campaignDetail").classList.add("hidden");
+      document.getElementById("reserveMsg").textContent = "";
+      document.getElementById("quotaSelected").value = "";
+      document.getElementById("reserveBtn").disabled = true;
+      document.getElementById("campaignList").classList.remove("hidden");
+      window.scrollTo({top: 0, behavior:"smooth"});
+    }
+
+    async function openCampaign(id){
+      currentCampaignId = id;
+      document.getElementById("campaignList").classList.add("hidden");
+      document.getElementById("campaignDetail").classList.remove("hidden");
+      selectedQuota = null;
+
+      const [c, sellers, quotas] = await Promise.all([
+        fetch(`/api/public/campaigns/${id}`).then(r=>r.json()),
+        fetch(`/api/public/campaigns/${id}/sellers`).then(r=>r.json()),
+        fetch(`/api/public/campaigns/${id}/quotas`).then(r=>r.json()),
+      ]);
+
+      document.getElementById("cTitle").textContent = c.title || "Campanha";
+      document.getElementById("cDesc").textContent = c.description || "";
+
+      const sel = document.getElementById("sellerSelect");
+      sel.innerHTML = (sellers.items||[]).map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+      if (!sel.innerHTML) sel.innerHTML = `<option value="">Sem vendedores cadastrados</option>`;
+
+      const grid = document.getElementById("quotaGrid");
+      grid.innerHTML = (quotas.items||[]).map(q => {
+        const cls = q.status === "AVAILABLE"
+          ? "bg-white hover:bg-slate-50 border border-slate-200"
+          : "bg-slate-200 text-slate-500 border border-slate-200 cursor-not-allowed";
+        return `<button ${q.status!=="AVAILABLE"?"disabled":""}
+          class="h-9 rounded-lg text-sm font-semibold ${cls}"
+          onclick="pickQuota('${q.code}')">${q.code}</button>`;
+      }).join("");
+    }
+
+    function pickQuota(code){
+      selectedQuota = code;
+      document.getElementById("quotaSelected").value = code;
+      const sellerId = document.getElementById("sellerSelect").value;
+      document.getElementById("reserveBtn").disabled = !sellerId;
+    }
+
+    document.getElementById("sellerSelect").addEventListener("change", () => {
+      const sellerId = document.getElementById("sellerSelect").value;
+      document.getElementById("reserveBtn").disabled = !(sellerId && selectedQuota);
+    });
+
+    document.getElementById("reserveBtn").addEventListener("click", async () => {
+      const sellerId = document.getElementById("sellerSelect").value;
+      if (!sellerId || !selectedQuota) return;
+
+      document.getElementById("reserveMsg").textContent = "Reservando...";
+      const res = await fetch(`/api/public/campaigns/${currentCampaignId}/reserve`, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify({ quotaCode: selectedQuota, sellerId })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        document.getElementById("reserveMsg").textContent = data?.message || "Erro ao reservar.";
+        return;
+      }
+      document.getElementById("reserveMsg").textContent = "Reserva criada! (Pagamento será adicionado depois.)";
+    });
+
+    (async () => {
+      const res = await fetch("/api/public/campaigns");
+      const data = await res.json();
+      const list = document.getElementById("campaignList");
+      const items = data.items || [];
+      if (!items.length) {
+        list.innerHTML = `<div class="p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-600">Nenhuma campanha criada ainda.</div>`;
+        return;
+      }
+      list.innerHTML = items.map(c => `
+        <div class="p-5 rounded-2xl border border-slate-200 hover:bg-slate-50 transition">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="text-xl font-bold">${c.title}</div>
+              <div class="text-slate-600 mt-1">${c.description || ""}</div>
+              <div class="text-sm text-slate-500 mt-2">Cotas: ${c.total_quotas} • Disponíveis: ${c.available_quotas}</div>
+            </div>
+            <button class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-500" onclick="openCampaign(${c.id})">
+              Ver cotas
+            </button>
+          </div>
+        </div>
+      `).join("");
+    })();
+  </script>
+</body>
+</html>

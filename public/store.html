@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loja • RCC MA Nota 10</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div id="topbar"></div>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Loja</h1>
+        <p class="text-sm text-slate-600">Produtos simples (camisas, terços, livros…).</p>
+      </div>
+      <button id="openCart" class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">Carrinho (<span id="cartCount">0</span>)</button>
+    </div>
+
+    <div id="grid" class="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+    <div class="mt-10 text-xs text-slate-500">
+      <p><b>Nota:</b> pedido é registrado no banco. Pagamento pode ser integrado depois (PIX/Cartão).</p>
+    </div>
+  </main>
+
+  <!-- Cart Modal -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/40 p-4 items-center justify-center">
+    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-lg border">
+      <div class="px-5 py-4 border-b flex items-center justify-between">
+        <div class="font-semibold">Carrinho</div>
+        <button id="close" class="px-3 py-1 rounded-lg hover:bg-slate-100">✕</button>
+      </div>
+      <div class="p-5">
+        <div id="empty" class="text-sm text-slate-600">Seu carrinho está vazio.</div>
+        <div id="items" class="hidden divide-y"></div>
+
+        <div class="mt-5 grid md:grid-cols-2 gap-3">
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-600">Nome</span>
+            <input id="buyer_name" class="border rounded-xl px-3 py-2" placeholder="opcional" />
+          </label>
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-600">WhatsApp</span>
+            <input id="buyer_whatsapp" class="border rounded-xl px-3 py-2" placeholder="opcional" />
+          </label>
+        </div>
+
+        <div class="mt-4 flex items-center justify-between">
+          <div class="text-sm text-slate-600">Total: <b id="total">R$ 0,00</b></div>
+          <button id="checkout" class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Finalizar pedido</button>
+        </div>
+
+        <div id="msg" class="hidden mt-3 text-sm"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { apiFetch, moneyBRLFromCents, renderTopbar } from "./app.js";
+    renderTopbar('loja');
+
+    const grid = document.querySelector('#grid');
+    const cartCount = document.querySelector('#cartCount');
+
+    const modal = document.querySelector('#modal');
+    const openCart = document.querySelector('#openCart');
+    const close = document.querySelector('#close');
+    const itemsEl = document.querySelector('#items');
+    const emptyEl = document.querySelector('#empty');
+    const totalEl = document.querySelector('#total');
+    const checkoutBtn = document.querySelector('#checkout');
+    const msg = document.querySelector('#msg');
+
+    let products = [];
+    let cart = new Map(); // id -> qty
+
+    function showModal(open){
+      modal.classList.toggle('hidden', !open);
+      modal.classList.toggle('flex', open);
+      msg.classList.add('hidden');
+      renderCart();
+    }
+
+    function showMessage(text, ok=false){
+      msg.classList.remove('hidden');
+      msg.className = `mt-3 text-sm rounded-xl px-3 py-2 ${ok? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`;
+      msg.textContent = text;
+    }
+
+    function updateCartCount(){
+      let c = 0;
+      for (const v of cart.values()) c += v;
+      cartCount.textContent = String(c);
+    }
+
+    function addToCart(id){
+      cart.set(id, (cart.get(id) || 0) + 1);
+      updateCartCount();
+    }
+
+    function removeFromCart(id){
+      cart.delete(id);
+      updateCartCount();
+    }
+
+    function setQty(id, qty){
+      if (qty <= 0) return removeFromCart(id);
+      cart.set(id, qty);
+      updateCartCount();
+    }
+
+    function render(){
+      if (products.length === 0) {
+        grid.innerHTML = `<div class="bg-white rounded-2xl border p-6 text-sm text-slate-600">Nenhum produto cadastrado ainda. Entre como Admin e cadastre em <b>Admin → Produtos</b>.</div>`;
+        return;
+      }
+      grid.innerHTML = products.map(p => {
+        const img = p.image_url ? `<img src="${p.image_url}" class="h-40 w-full object-cover rounded-xl border" />` : `<div class="h-40 w-full rounded-xl border bg-slate-50 flex items-center justify-center text-slate-400 text-sm">Sem imagem</div>`;
+        return `
+          <div class="bg-white rounded-2xl border shadow-sm p-4">
+            ${img}
+            <div class="mt-3 font-semibold">${p.title}</div>
+            <div class="text-sm text-slate-600 mt-1 line-clamp-2">${p.description || ''}</div>
+            <div class="mt-3 flex items-center justify-between">
+              <div class="font-bold">R$ ${moneyBRLFromCents(p.price_cents)}</div>
+              <button data-add="${p.id}" class="px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 text-sm">Adicionar</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function renderCart(){
+      const entries = [...cart.entries()];
+      if (entries.length === 0) {
+        emptyEl.classList.remove('hidden');
+        itemsEl.classList.add('hidden');
+        totalEl.textContent = 'R$ 0,00';
+        return;
+      }
+
+      emptyEl.classList.add('hidden');
+      itemsEl.classList.remove('hidden');
+
+      let total = 0;
+      itemsEl.innerHTML = entries.map(([id, qty]) => {
+        const p = products.find(x => x.id === id);
+        if (!p) return '';
+        const line = p.price_cents * qty;
+        total += line;
+        return `
+          <div class="py-3 flex items-center justify-between gap-3">
+            <div>
+              <div class="font-medium">${p.title}</div>
+              <div class="text-xs text-slate-500">R$ ${moneyBRLFromCents(p.price_cents)} • ${qty} un</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button data-dec="${id}" class="px-2 py-1 rounded-lg border">-</button>
+              <span class="w-6 text-center">${qty}</span>
+              <button data-inc="${id}" class="px-2 py-1 rounded-lg border">+</button>
+              <button data-rm="${id}" class="px-2 py-1 rounded-lg border border-red-200 text-red-700">Remover</button>
+            </div>
+          </div>`;
+      }).join('');
+
+      totalEl.textContent = `R$ ${moneyBRLFromCents(total)}`;
+    }
+
+    grid.addEventListener('click', (e) => {
+      const id = e.target?.dataset?.add;
+      if (!id) return;
+      addToCart(Number(id));
+    });
+
+    openCart.addEventListener('click', () => showModal(true));
+    close.addEventListener('click', () => showModal(false));
+    modal.addEventListener('click', (e) => { if (e.target === modal) showModal(false); });
+
+    itemsEl.addEventListener('click', (e) => {
+      const inc = e.target?.dataset?.inc;
+      const dec = e.target?.dataset?.dec;
+      const rm = e.target?.dataset?.rm;
+      if (inc) setQty(Number(inc), (cart.get(Number(inc)) || 0) + 1);
+      if (dec) setQty(Number(dec), (cart.get(Number(dec)) || 0) - 1);
+      if (rm) removeFromCart(Number(rm));
+      renderCart();
+    });
+
+    checkoutBtn.addEventListener('click', async () => {
+      const items = [...cart.entries()].map(([product_id, qty]) => ({ product_id, qty }));
+      if (items.length === 0) return;
+      try {
+        const buyer_name = document.querySelector('#buyer_name').value;
+        const buyer_whatsapp = document.querySelector('#buyer_whatsapp').value;
+        await apiFetch('/api/orders', { method: 'POST', body: JSON.stringify({ buyer_name, buyer_whatsapp, items }) });
+        cart = new Map();
+        updateCartCount();
+        renderCart();
+        showMessage('Pedido registrado! Em breve entraremos em contato. 🙏', true);
+      } catch (err) {
+        showMessage(err.message);
+      }
+    });
+
+    async function load(){
+      const r = await apiFetch('/api/products');
+      products = r.items;
+      render();
+    }
+
+    load().catch(err => {
+      grid.innerHTML = `<div class="bg-white rounded-2xl border p-6 text-sm text-red-700">Erro ao carregar produtos: ${err.message}</div>`;
+    });
+  </script>
+</body>
+</html>
