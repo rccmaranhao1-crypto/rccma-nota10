@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Entrar • RCC MARANHÃO</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbarInner">
+    <a class="brand" href="/index.html">
+      <img class="logoImg" src="/assets/logo-condensada.png" alt="RCC Maranhão" />
+      <div class="brandText">
+        <div class="brandTitle">RCC MARANHÃO</div>
+        <div class="brandSub">Portal do Meu Grupo de Oração</div>
+      </div>
+    </a>
+  </div>
+</header>
+
+<main class="container" style="max-width:520px;">
+  <div class="pageHead">
+    <h1>Entrar</h1>
+    <p>Use seu WhatsApp e senha.</p>
+  </div>
+
+  <div class="card">
+    <div class="cardBody">
+      <div class="formRow">
+        <label>WhatsApp (ou usuário)</label>
+        <input id="whats" placeholder="Ex.: 5599999999999"/>
+      </div>
+      <div class="formRow">
+        <label>Senha</label>
+        <input id="pass" type="password" placeholder="••••••••"/>
+      </div>
+
+      <div class="actions">
+        <button class="btnPrimary" id="loginBtn">Entrar</button>
+        <span class="hint" id="hint"></span>
+      </div>
+
+      <div class="divider"></div>
+      <div class="muted" style="font-size:13px;">
+        Admin Master padrão (se você não alterou): <b>whatsapp</b> = <code>admin</code> e <b>senha</b> = <code>admin123</code>.<br/>
+        Depois você troca no Railway usando variáveis de ambiente.
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  const hint = document.getElementById("hint");
+  hint.textContent = "Entrando...";
+  try{
+    const whatsapp = document.getElementById("whats").value.trim();
+    const senha = document.getElementById("pass").value.trim();
+
+    const res = await fetch("/auth/login", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ whatsapp, senha })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.message || "Erro");
+
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("role", data.user.role);
+    localStorage.setItem("name", data.user.name);
+    hint.textContent = "OK!";
+    location.href = "/index.html";
+  }catch(e){
+    hint.textContent = e.message;
+  }
+});
+</script>
+</body>
+</html>

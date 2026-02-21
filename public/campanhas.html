@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Campanhas • RCC MARANHÃO</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbarInner">
+    <a class="brand" href="/index.html">
+      <img class="logoImg" src="/assets/logo-condensada.png" alt="RCC Maranhão" />
+      <div class="brandText">
+        <div class="brandTitle">RCC MARANHÃO</div>
+        <div class="brandSub">Portal do Meu Grupo de Oração</div>
+      </div>
+    </a>
+
+    <nav class="nav">
+      <a href="/index.html">Início</a>
+      <a href="/rcc.html">A RCC</a>
+      <a href="/meugo.html">Meu GO Nota 10</a>
+      <a class="active" href="/campanhas.html">Campanhas</a>
+      <a href="/loja.html">Loja</a>
+      <a href="/sou.html">Sou Carismático</a>
+      <a href="/admin.html">Admin</a>
+    </nav>
+
+    <div class="navRight">
+      <a class="btnGhost" href="/login.html" id="loginBtn">Entrar</a>
+      <button class="btnGhost" id="logoutBtn" style="display:none">Sair</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="pageHead">
+    <h1>Campanhas</h1>
+    <p>Escolha uma campanha e selecione suas cotas. Ao reservar, você escolhe obrigatoriamente um vendedor.</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="cardTitle">Campanhas ativas</div>
+      <div class="cardBody">
+        <div id="campaignList" class="list"></div>
+      </div>
+    </div>
+
+    <div class="card" id="campaignPanel" style="display:none">
+      <div class="cardTitle" id="campTitle"></div>
+      <div class="cardSub" id="campMeta"></div>
+      <div class="divider"></div>
+
+      <div class="formRow">
+        <label>Vendedor (obrigatório)</label>
+        <select id="sellerSelect"></select>
+      </div>
+
+      <div class="grid2 formGrid">
+        <div class="formRow">
+          <label>Seu nome</label>
+          <input id="buyerName" placeholder="Ex.: Maria Silva"/>
+        </div>
+        <div class="formRow">
+          <label>WhatsApp</label>
+          <input id="buyerWhats" placeholder="(99) 99999-9999"/>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="quotaBar">
+        <div><b>Cotas</b> — clique para selecionar</div>
+        <div class="quotaStats" id="quotaStats"></div>
+      </div>
+      <div id="quotaGrid" class="quotaGrid"></div>
+
+      <div class="divider"></div>
+
+      <div class="actions">
+        <button class="btnPrimary" id="reserveBtn">Reservar cotas</button>
+        <button class="btnGhost" id="clearBtn">Limpar seleção</button>
+      </div>
+
+      <div class="hint" id="reserveHint"></div>
+    </div>
+  </div>
+</main>
+
+<script src="/app.js"></script>
+<script src="/campanhas.js"></script>
+</body>
+</html>
