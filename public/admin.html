@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin • RCC MARANHÃO</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbarInner">
+    <a class="brand" href="/index.html">
+      <img class="logoImg" src="/assets/logo-condensada.png" alt="RCC Maranhão" />
+      <div class="brandText">
+        <div class="brandTitle">RCC MARANHÃO</div>
+        <div class="brandSub">Administração</div>
+      </div>
+    </a>
+
+    <nav class="nav">
+      <a href="/index.html">Início</a>
+      <a href="/rcc.html">A RCC</a>
+      <a href="/meugo.html">Meu GO Nota 10</a>
+      <a href="/campanhas.html">Campanhas</a>
+      <a href="/loja.html">Loja</a>
+      <a href="/sou.html">Sou Carismático</a>
+      <a class="active" href="/admin.html">Admin</a>
+    </nav>
+
+    <div class="navRight">
+      <a class="btnGhost" href="/login.html" id="loginBtn">Entrar</a>
+      <button class="btnGhost" id="logoutBtn" style="display:none">Sair</button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="pageHead">
+    <h1>Painel Admin</h1>
+    <p>Somente o <b>ADMIN MASTER</b> pode promover/revogar perfis (COMUNICAÇÃO, TESOUREIRO).</p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="cardTitle">Usuários e Perfis</div>
+      <div class="cardBody">
+        <div id="users" class="list"></div>
+        <div class="hint" id="usersHint"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardTitle">Criar campanha</div>
+      <div class="cardBody">
+        <div class="formRow"><label>Título</label><input id="cTitle" placeholder="Ex.: Rifa Solidária"/></div>
+        <div class="formRow"><label>Descrição</label><input id="cDesc" placeholder="Opcional"/></div>
+        <div class="grid2 formGrid">
+          <div class="formRow"><label>Valor (R$)</label><input id="cPrice" placeholder="10,00"/></div>
+          <div class="formRow"><label>Total de cotas</label><input id="cTotal" placeholder="100"/></div>
+        </div>
+        <div class="actions">
+          <button class="btnPrimary" id="createCamp">Criar</button>
+          <span class="hint" id="campHint"></span>
+        </div>
+        <div class="divider"></div>
+        <div class="muted" style="font-size:13px;">Depois de criar, adicione vendedores e gerencie cotas no módulo Campanhas.</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="/app.js"></script>
+<script>
+const token = localStorage.getItem("token") || "";
+const role = localStorage.getItem("role") || "";
+
+function moneyToCents(v){
+  const n = (v||"").toString().replace(/\./g,"").replace(",",".");
+  const f = Number(n);
+  return Number.isFinite(f) ? Math.round(f*100) : 0;
+}
+
+async function loadUsers(){
+  const hint = document.getElementById("usersHint");
+  const el = document.getElementById("users");
+  if(!token){ hint.textContent="Entre para acessar o Admin."; return; }
+  if(role!=="ADMIN_MASTER"){ hint.textContent="Sem permissão. Você precisa ser ADMIN MASTER."; return; }
+
+  hint.textContent="Carregando...";
+  const res = await fetch("/api/users",{ headers:{ "Authorization":"Bearer "+token }});
+  const data = await res.json();
+  if(!res.ok){ hint.textContent = data.message || "Erro"; return; }
+  hint.textContent="";
+
+  const roles = ["USER","COMUNICACAO","TESOUREIRO","ADMIN_MASTER"];
+  el.innerHTML = data.map(u => `
+    <div class="listItem" style="cursor:default;">
+      <div>
+        <div class="liTitle">${u.name}</div>
+        <div class="liSub">${u.whatsapp} • ${new Date(u.created_at).toLocaleDateString("pt-BR")}</div>
+      </div>
+      <select data-id="${u.id}" style="padding:10px;border-radius:12px;border:1px solid var(--rcc-border);">
+        ${roles.map(r => `<option ${u.role===r?"selected":""}>${r}</option>`).join("")}
+      </select>
+    </div>
+  `).join("");
+
+  el.querySelectorAll("select[data-id]").forEach(s => {
+    s.addEventListener("change", async () => {
+      const userId = s.dataset.id;
+      const newRole = s.value;
+      const r = await fetch(`/api/users/${userId}/role`,{
+        method:"PATCH",
+        headers:{ "Content-Type":"application/json","Authorization":"Bearer "+token },
+        body: JSON.stringify({ role: newRole })
+      });
+      const d = await r.json();
+      if(!r.ok){ alert(d.message || "Erro"); }
+    });
+  });
+}
+
+document.getElementById("createCamp").addEventListener("click", async ()=>{
+  const hint = document.getElementById("campHint");
+  if(!token){ hint.textContent="Entre primeiro."; return; }
+  if(role!=="ADMIN_MASTER"){ hint.textContent="Somente ADMIN MASTER cria campanhas."; return; }
+
+  hint.textContent="Criando...";
+  try{
+    const payload = {
+      title: document.getElementById("cTitle").value.trim(),
+      description: document.getElementById("cDesc").value.trim(),
+      price_cents: moneyToCents(document.getElementById("cPrice").value.trim()),
+      total_quotas: Number(document.getElementById("cTotal").value.trim()||0),
+      model: "SEQUENTIAL"
+    };
+    const res = await fetch("/api/campaigns",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","Authorization":"Bearer "+token },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.message || "Erro");
+    hint.textContent="Campanha criada!";
+  }catch(e){
+    hint.textContent=e.message;
+  }
+});
+
+loadUsers();
+</script>
+</body>
+</html>
