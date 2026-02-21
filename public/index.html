@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RCC MA • Nota 10</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div id="topbar"></div>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <section class="bg-white rounded-2xl shadow-sm border p-6 md:p-10">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <h1 class="text-2xl md:text-4xl font-bold">Portal <span class="text-indigo-600">Meu Grupo de Oração Nota 10</span></h1>
+          <p class="mt-3 text-slate-600 max-w-2xl">
+            Cadastre membros, organize grupos, registre doações e disponibilize uma loja simples.
+            Tudo em um único sistema, pronto para produção.
+          </p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a href="/membros" class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Ver membros</a>
+            <a href="/doacoes" class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">Fazer doação</a>
+            <a href="/loja" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Abrir loja</a>
+          </div>
+        </div>
+
+        <div class="w-full md:w-[380px]">
+          <div class="rounded-2xl border bg-gradient-to-br from-indigo-50 to-slate-50 p-6">
+            <h2 class="font-semibold">Status do sistema</h2>
+            <div id="health" class="mt-3 text-sm text-slate-600">Verificando…</div>
+            <p class="mt-4 text-xs text-slate-500">
+              Dica: se estiver no Railway, o banco Postgres deve estar conectado via <b>DATABASE_URL</b>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-8 grid md:grid-cols-3 gap-4">
+      <div class="bg-white rounded-2xl border p-5">
+        <div class="text-sm text-slate-500">Módulo</div>
+        <div class="mt-1 font-semibold">Membros</div>
+        <p class="mt-2 text-sm text-slate-600">Cadastro e controle por cidade/grupo/paróquia.</p>
+      </div>
+      <div class="bg-white rounded-2xl border p-5">
+        <div class="text-sm text-slate-500">Módulo</div>
+        <div class="mt-1 font-semibold">Doações</div>
+        <p class="mt-2 text-sm text-slate-600">Registro de doações e acompanhamento no Admin.</p>
+      </div>
+      <div class="bg-white rounded-2xl border p-5">
+        <div class="text-sm text-slate-500">Módulo</div>
+        <div class="mt-1 font-semibold">Loja</div>
+        <p class="mt-2 text-sm text-slate-600">Produtos simples com pedidos salvos no banco.</p>
+      </div>
+    </section>
+
+    <footer class="mt-10 text-center text-xs text-slate-500">
+      RCC Maranhão • Nota 10 • v1
+    </footer>
+  </main>
+
+  <script type="module">
+    import { apiFetch, renderTopbar } from "./app.js";
+    renderTopbar("home");
+
+    const health = document.querySelector('#health');
+    try {
+      const r = await apiFetch('/api/health');
+      health.innerHTML = r.ok
+        ? `<span class="inline-flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-green-500"></span> Online • Banco OK</span>`
+        : `<span class="inline-flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-red-500"></span> Problema</span>`;
+    } catch (e) {
+      health.textContent = 'Não foi possível verificar. Veja os logs do deploy.';
+    }
+  </script>
+</body>
+</html>

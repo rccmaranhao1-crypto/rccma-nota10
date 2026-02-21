@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin • RCC MA Nota 10</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div id="topbar"></div>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Admin</h1>
+        <p class="text-sm text-slate-600">Gerencie membros, produtos, doações e pedidos.</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="/membros" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Membros</a>
+        <a href="/doacoes" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Doações</a>
+        <a href="/loja" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Loja</a>
+        <button id="reload" class="px-4 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800">Atualizar</button>
+      </div>
+    </div>
+
+    <div class="mt-6 grid md:grid-cols-4 gap-4" id="cards"></div>
+
+    <div class="mt-6 grid lg:grid-cols-2 gap-6">
+      <section class="bg-white rounded-2xl border shadow-sm p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold">Produtos</h2>
+          <button id="newProduct" class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 text-sm">Novo produto</button>
+        </div>
+        <div class="mt-4 overflow-auto border rounded-2xl">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-600">
+              <tr>
+                <th class="text-left font-medium px-4 py-2">Título</th>
+                <th class="text-left font-medium px-4 py-2">Preço</th>
+                <th class="text-left font-medium px-4 py-2">Ativo</th>
+                <th class="text-right font-medium px-4 py-2">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="products"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="bg-white rounded-2xl border shadow-sm p-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-bold">Pedidos</h2>
+          <span class="text-sm text-slate-500">Últimos 500</span>
+        </div>
+        <div class="mt-4 overflow-auto border rounded-2xl">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-600">
+              <tr>
+                <th class="text-left font-medium px-4 py-2">Data</th>
+                <th class="text-left font-medium px-4 py-2">Comprador</th>
+                <th class="text-left font-medium px-4 py-2">Total</th>
+                <th class="text-left font-medium px-4 py-2">Status</th>
+                <th class="text-right font-medium px-4 py-2">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="orders"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <section class="mt-6 bg-white rounded-2xl border shadow-sm p-6">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold">Doações</h2>
+        <span class="text-sm text-slate-500">Últimas 500</span>
+      </div>
+      <div class="mt-4 overflow-auto border rounded-2xl">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="text-left font-medium px-4 py-2">Data</th>
+              <th class="text-left font-medium px-4 py-2">Doador</th>
+              <th class="text-left font-medium px-4 py-2">Valor</th>
+              <th class="text-left font-medium px-4 py-2">Método</th>
+              <th class="text-left font-medium px-4 py-2">Status</th>
+              <th class="text-right font-medium px-4 py-2">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="donations"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Product Modal -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/40 p-4 items-center justify-center">
+    <div class="w-full max-w-xl bg-white rounded-2xl shadow-lg border">
+      <div class="px-5 py-4 border-b flex items-center justify-between">
+        <div class="font-semibold" id="modalTitle">Novo produto</div>
+        <button id="close" class="px-3 py-1 rounded-lg hover:bg-slate-100">✕</button>
+      </div>
+      <form id="form" class="p-5 grid gap-3">
+        <input type="hidden" name="id" />
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Título</span>
+          <input name="title" class="border rounded-xl px-3 py-2" required />
+        </label>
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Descrição</span>
+          <input name="description" class="border rounded-xl px-3 py-2" placeholder="opcional" />
+        </label>
+        <div class="grid md:grid-cols-2 gap-3">
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-600">Preço (R$)</span>
+            <input name="price" class="border rounded-xl px-3 py-2" placeholder="ex: 39,90" required />
+          </label>
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-600">Ativo</span>
+            <select name="active" class="border rounded-xl px-3 py-2">
+              <option value="true">Sim</option>
+              <option value="false">Não</option>
+            </select>
+          </label>
+        </div>
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">URL da imagem</span>
+          <input name="image_url" class="border rounded-xl px-3 py-2" placeholder="opcional" />
+        </label>
+
+        <div id="msg" class="hidden text-sm"></div>
+
+        <div class="mt-2 flex items-center justify-between">
+          <button id="btnDelete" type="button" class="hidden px-4 py-2 rounded-xl border border-red-200 text-red-700 hover:bg-red-50">Excluir</button>
+          <div class="ml-auto flex gap-2">
+            <button type="button" id="cancel" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancelar</button>
+            <button class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Salvar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { apiFetch, moneyBRLFromCents, renderTopbar, requireAdmin } from "./app.js";
+    renderTopbar('admin');
+    requireAdmin();
+
+    const cards = document.querySelector('#cards');
+    const reload = document.querySelector('#reload');
+
+    const productsTbody = document.querySelector('#products');
+    const ordersTbody = document.querySelector('#orders');
+    const donationsTbody = document.querySelector('#donations');
+
+    const modal = document.querySelector('#modal');
+    const close = document.querySelector('#close');
+    const cancel = document.querySelector('#cancel');
+    const newProduct = document.querySelector('#newProduct');
+    const form = document.querySelector('#form');
+    const modalTitle = document.querySelector('#modalTitle');
+    const btnDelete = document.querySelector('#btnDelete');
+    const msg = document.querySelector('#msg');
+
+    let products = [];
+
+    function showModal(open){
+      modal.classList.toggle('hidden', !open);
+      modal.classList.toggle('flex', open);
+      msg.classList.add('hidden');
+    }
+
+    function showMessage(text, ok=false){
+      msg.classList.remove('hidden');
+      msg.className = `text-sm rounded-xl px-3 py-2 ${ok? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`;
+      msg.textContent = text;
+    }
+
+    function fillProduct(p){
+      form.id.value = p?.id || '';
+      form.title.value = p?.title || '';
+      form.description.value = p?.description || '';
+      form.price.value = p ? moneyBRLFromCents(p.price_cents) : '';
+      form.image_url.value = p?.image_url || '';
+      form.active.value = (p?.active ?? true) ? 'true' : 'false';
+
+      const editing = Boolean(p?.id);
+      modalTitle.textContent = editing ? `Editar produto #${p.id}` : 'Novo produto';
+      btnDelete.classList.toggle('hidden', !editing);
+    }
+
+    function badge(t){
+      return `px-2 py-1 rounded-lg text-xs border ${t==='PAGO'||t==='CONCLUIDO'?'bg-green-50 text-green-700 border-green-200':'bg-slate-50 text-slate-700 border-slate-200'}`;
+    }
+
+    function renderProducts(){
+      productsTbody.innerHTML = products.map(p => `
+        <tr class="border-t hover:bg-slate-50">
+          <td class="px-4 py-2 font-medium">${p.title}</td>
+          <td class="px-4 py-2">R$ ${moneyBRLFromCents(p.price_cents)}</td>
+          <td class="px-4 py-2">${p.active ? 'SIM' : 'NÃO'}</td>
+          <td class="px-4 py-2 text-right">
+            <button data-edit="${p.id}" class="px-3 py-1 rounded-lg border hover:bg-white">Editar</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    async function load(){
+      const [p, o, d, m] = await Promise.all([
+        apiFetch('/api/admin/products'),
+        apiFetch('/api/admin/orders'),
+        apiFetch('/api/admin/donations'),
+        apiFetch('/api/admin/members')
+      ]);
+
+      products = p.items;
+      renderProducts();
+
+      ordersTbody.innerHTML = o.items.map(x => {
+        const date = new Date(x.created_at).toLocaleString('pt-BR');
+        const buyer = (x.buyer_name || '-') + (x.buyer_whatsapp ? ` • ${x.buyer_whatsapp}` : '');
+        return `
+          <tr class="border-t hover:bg-slate-50">
+            <td class="px-4 py-2">${date}</td>
+            <td class="px-4 py-2">${buyer}</td>
+            <td class="px-4 py-2 font-medium">R$ ${moneyBRLFromCents(x.total_cents)}</td>
+            <td class="px-4 py-2"><span class="${badge(x.status)}">${x.status}</span></td>
+            <td class="px-4 py-2 text-right">
+              <button data-done="${x.id}" class="px-3 py-1 rounded-lg border hover:bg-white">Concluir</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      donationsTbody.innerHTML = d.items.map(x => {
+        const date = new Date(x.created_at).toLocaleString('pt-BR');
+        const donor = (x.donor_name || '-') + (x.donor_whatsapp ? ` • ${x.donor_whatsapp}` : '');
+        return `
+          <tr class="border-t hover:bg-slate-50">
+            <td class="px-4 py-2">${date}</td>
+            <td class="px-4 py-2">${donor}</td>
+            <td class="px-4 py-2 font-medium">R$ ${moneyBRLFromCents(x.amount_cents)}</td>
+            <td class="px-4 py-2">${x.method}</td>
+            <td class="px-4 py-2"><span class="${badge(x.status)}">${x.status}</span></td>
+            <td class="px-4 py-2 text-right">
+              <button data-pay="${x.id}" class="px-3 py-1 rounded-lg border hover:bg-white">Marcar PAGO</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      const totalMembers = m.items.length;
+      const totalProducts = p.items.length;
+      const totalOrders = o.items.length;
+      const totalDonations = d.items.length;
+
+      cards.innerHTML = [
+        { t: 'Membros', v: totalMembers },
+        { t: 'Produtos', v: totalProducts },
+        { t: 'Pedidos', v: totalOrders },
+        { t: 'Doações', v: totalDonations },
+      ].map(c => `
+        <div class="bg-white rounded-2xl border shadow-sm p-5">
+          <div class="text-sm text-slate-500">${c.t}</div>
+          <div class="mt-1 text-2xl font-bold">${c.v}</div>
+        </div>`).join('');
+    }
+
+    productsTbody.addEventListener('click', (e) => {
+      const id = e.target?.dataset?.edit;
+      if (!id) return;
+      const p = products.find(x => String(x.id) === String(id));
+      fillProduct(p);
+      showModal(true);
+    });
+
+    ordersTbody.addEventListener('click', async (e) => {
+      const id = e.target?.dataset?.done;
+      if (!id) return;
+      await apiFetch(`/api/admin/orders/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'CONCLUIDO' }) });
+      await load();
+    });
+
+    donationsTbody.addEventListener('click', async (e) => {
+      const id = e.target?.dataset?.pay;
+      if (!id) return;
+      await apiFetch(`/api/admin/donations/${id}`, { method: 'PUT', body: JSON.stringify({ status: 'PAGO' }) });
+      await load();
+    });
+
+    newProduct.addEventListener('click', () => {
+      fillProduct(null);
+      showModal(true);
+    });
+
+    close.addEventListener('click', () => showModal(false));
+    cancel.addEventListener('click', () => showModal(false));
+    modal.addEventListener('click', (e) => { if (e.target === modal) showModal(false); });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const payload = {
+          title: form.title.value,
+          description: form.description.value,
+          price: form.price.value,
+          image_url: form.image_url.value,
+          active: form.active.value === 'true'
+        };
+        if (form.id.value) {
+          await apiFetch(`/api/admin/products/${form.id.value}`, { method: 'PUT', body: JSON.stringify(payload) });
+          showMessage('Salvo com sucesso!', true);
+        } else {
+          await apiFetch('/api/admin/products', { method: 'POST', body: JSON.stringify(payload) });
+          showMessage('Criado com sucesso!', true);
+        }
+        await load();
+        setTimeout(() => showModal(false), 250);
+      } catch (err) {
+        showMessage(err.message);
+      }
+    });
+
+    btnDelete.addEventListener('click', async () => {
+      if (!confirm('Excluir este produto?')) return;
+      try {
+        await apiFetch(`/api/admin/products/${form.id.value}`, { method: 'DELETE' });
+        await load();
+        showModal(false);
+      } catch (err) {
+        showMessage(err.message);
+      }
+    });
+
+    reload.addEventListener('click', () => load().catch(err => alert(err.message)));
+
+    load().catch(err => alert(err.message));
+  </script>
+</body>
+</html>

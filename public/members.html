@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Membros • RCC MA Nota 10</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div id="topbar"></div>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold">Membros</h1>
+        <p class="text-sm text-slate-600">Cadastro e controle de membros (Admin).</p>
+      </div>
+      <div class="flex gap-2">
+        <input id="search" class="border rounded-xl px-3 py-2 w-full md:w-72" placeholder="Buscar por nome, cidade, grupo…" />
+        <button id="btnNew" class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Novo</button>
+      </div>
+    </div>
+
+    <div id="notAdmin" class="hidden mt-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-4 text-sm">
+      Esta área é restrita ao administrador. Faça login como <b>ADMIN</b>.
+    </div>
+
+    <div class="mt-6 bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <div class="px-4 py-3 border-b flex items-center justify-between">
+        <div class="text-sm text-slate-600">Lista (máx. 500)</div>
+        <div id="status" class="text-sm text-slate-500">—</div>
+      </div>
+      <div class="overflow-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="text-left font-medium px-4 py-2">Nome</th>
+              <th class="text-left font-medium px-4 py-2">WhatsApp</th>
+              <th class="text-left font-medium px-4 py-2">Grupo</th>
+              <th class="text-left font-medium px-4 py-2">Cidade</th>
+              <th class="text-left font-medium px-4 py-2">Status</th>
+              <th class="text-right font-medium px-4 py-2">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal -->
+  <div id="modal" class="hidden fixed inset-0 bg-black/40 p-4 items-center justify-center">
+    <div class="w-full max-w-xl bg-white rounded-2xl shadow-lg border">
+      <div class="px-5 py-4 border-b flex items-center justify-between">
+        <div class="font-semibold" id="modalTitle">Novo membro</div>
+        <button id="close" class="px-3 py-1 rounded-lg hover:bg-slate-100">✕</button>
+      </div>
+      <form id="form" class="p-5 grid gap-3">
+        <input type="hidden" name="id" />
+        <label class="grid gap-1">
+          <span class="text-sm text-slate-600">Nome</span>
+          <input name="nome" class="border rounded-xl px-3 py-2" required />
+        </label>
+        <div class="grid md:grid-cols-2 gap-3">
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-600">WhatsApp</span>
+            <input name="whatsapp" class="border rounded-xl px-3 py-2" placeholder="opcional" />
+          </label>
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-600">Status</span>
+            <select name="status" class="border rounded-xl px-3 py-2">
+              <option value="ATIVO">ATIVO</option>
+              <option value="INATIVO">INATIVO</option>
+            </select>
+          </label>
+        </div>
+        <div class="grid md:grid-cols-3 gap-3">
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-600">Grupo</span>
+            <input name="grupo" class="border rounded-xl px-3 py-2" />
+          </label>
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-600">Paróquia</span>
+            <input name="paroquia" class="border rounded-xl px-3 py-2" />
+          </label>
+          <label class="grid gap-1">
+            <span class="text-sm text-slate-600">Cidade</span>
+            <input name="cidade" class="border rounded-xl px-3 py-2" />
+          </label>
+        </div>
+
+        <div id="msg" class="hidden text-sm"></div>
+
+        <div class="mt-2 flex items-center justify-between">
+          <button id="btnDelete" type="button" class="hidden px-4 py-2 rounded-xl border border-red-200 text-red-700 hover:bg-red-50">Excluir</button>
+          <div class="ml-auto flex gap-2">
+            <button type="button" id="cancel" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancelar</button>
+            <button class="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700">Salvar</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { apiFetch, getUser, renderTopbar, requireAdmin } from "./app.js";
+    renderTopbar('membros');
+
+    const u = getUser();
+    if (!u || u.role !== 'ADMIN') {
+      document.querySelector('#notAdmin').classList.remove('hidden');
+      document.querySelector('#btnNew').disabled = true;
+      document.querySelector('#btnNew').classList.add('opacity-50');
+    } else {
+      requireAdmin();
+    }
+
+    const tbody = document.querySelector('#tbody');
+    const status = document.querySelector('#status');
+    const search = document.querySelector('#search');
+
+    const modal = document.querySelector('#modal');
+    const form = document.querySelector('#form');
+    const modalTitle = document.querySelector('#modalTitle');
+    const close = document.querySelector('#close');
+    const cancel = document.querySelector('#cancel');
+    const btnNew = document.querySelector('#btnNew');
+    const btnDelete = document.querySelector('#btnDelete');
+    const msg = document.querySelector('#msg');
+
+    function showModal(open) {
+      modal.classList.toggle('hidden', !open);
+      modal.classList.toggle('flex', open);
+      msg.classList.add('hidden');
+    }
+
+    function showMessage(text, ok=false){
+      msg.classList.remove('hidden');
+      msg.className = `text-sm rounded-xl px-3 py-2 ${ok? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`;
+      msg.textContent = text;
+    }
+
+    function fillForm(item){
+      form.id.value = item?.id || '';
+      form.nome.value = item?.nome || '';
+      form.whatsapp.value = item?.whatsapp || '';
+      form.grupo.value = item?.grupo || '';
+      form.paroquia.value = item?.paroquia || '';
+      form.cidade.value = item?.cidade || '';
+      form.status.value = item?.status || 'ATIVO';
+
+      const editing = Boolean(item?.id);
+      modalTitle.textContent = editing ? `Editar membro #${item.id}` : 'Novo membro';
+      btnDelete.classList.toggle('hidden', !editing);
+    }
+
+    function row(item){
+      const td = (v) => v ? String(v) : '-';
+      return `
+        <tr class="border-t hover:bg-slate-50">
+          <td class="px-4 py-2 font-medium">${td(item.nome)}</td>
+          <td class="px-4 py-2">${td(item.whatsapp)}</td>
+          <td class="px-4 py-2">${td(item.grupo)}</td>
+          <td class="px-4 py-2">${td(item.cidade)}</td>
+          <td class="px-4 py-2"><span class="px-2 py-1 rounded-lg text-xs ${item.status==='ATIVO'?'bg-green-50 text-green-700 border border-green-200':'bg-slate-100 text-slate-700 border'}">${td(item.status)}</span></td>
+          <td class="px-4 py-2 text-right">
+            <button data-edit="${item.id}" class="px-3 py-1 rounded-lg border hover:bg-white">Editar</button>
+          </td>
+        </tr>`;
+    }
+
+    let last = [];
+    async function load(){
+      if (!u || u.role !== 'ADMIN') return;
+      status.textContent = 'Carregando…';
+      const q = search.value.trim();
+      const r = await apiFetch(`/api/admin/members${q?`?q=${encodeURIComponent(q)}`:''}`);
+      last = r.items;
+      tbody.innerHTML = r.items.map(row).join('');
+      status.textContent = `${r.items.length} item(ns)`;
+    }
+
+    tbody.addEventListener('click', (e) => {
+      const id = e.target?.dataset?.edit;
+      if (!id) return;
+      const item = last.find(x => String(x.id) === String(id));
+      fillForm(item);
+      showModal(true);
+    });
+
+    btnNew.addEventListener('click', () => {
+      fillForm(null);
+      showModal(true);
+    });
+
+    close.addEventListener('click', () => showModal(false));
+    cancel.addEventListener('click', () => showModal(false));
+    modal.addEventListener('click', (e) => { if (e.target === modal) showModal(false); });
+
+    search.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') load().catch(err => alert(err.message));
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const payload = {
+          nome: form.nome.value,
+          whatsapp: form.whatsapp.value,
+          grupo: form.grupo.value,
+          paroquia: form.paroquia.value,
+          cidade: form.cidade.value,
+          status: form.status.value
+        };
+
+        if (form.id.value) {
+          await apiFetch(`/api/admin/members/${form.id.value}`, { method: 'PUT', body: JSON.stringify(payload) });
+          showMessage('Salvo com sucesso!', true);
+        } else {
+          await apiFetch('/api/admin/members', { method: 'POST', body: JSON.stringify(payload) });
+          showMessage('Criado com sucesso!', true);
+        }
+        await load();
+        setTimeout(() => showModal(false), 300);
+      } catch (err) {
+        showMessage(err.message);
+      }
+    });
+
+    btnDelete.addEventListener('click', async () => {
+      if (!confirm('Excluir este membro?')) return;
+      try {
+        await apiFetch(`/api/admin/members/${form.id.value}`, { method: 'DELETE' });
+        await load();
+        showModal(false);
+      } catch (err) {
+        showMessage(err.message);
+      }
+    });
+
+    load().catch(err => alert(err.message));
+  </script>
+</body>
+</html>
