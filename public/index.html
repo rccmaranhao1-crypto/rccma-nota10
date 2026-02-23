@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>RCC Maranhão • Início</title>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body data-page="home">
+<header class="topbar">
+  <div class="inner">
+    <a class="brand" href="/">
+      <img src="/assets/logo.png" alt="RCC Maranhão" />
+      <div class="txt">
+        <strong>RCC MARANHÃO</strong>
+        <span>Portal oficial • Nota 10 • Campanhas • Loja</span>
+      </div>
+    </a>
+
+    <nav class="nav">
+      <a href="/">Início</a>
+      <a href="/rcc.html">A RCC</a>
+      <a href="/meugo.html">Meu GO Nota 10</a>
+      <a href="/campanhas.html">Campanhas</a>
+      <a href="/loja.html">Loja</a>
+      <a href="/sou.html">Sou Carismático</a>
+      <a href="/admin.html">Admin</a>
+    </nav>
+
+    <div class="actions">
+      <a class="btn light" id="btnLogin" href="/sou.html">Entrar</a>
+      <button class="btn" id="btnLogout" style="display:none">Sair</button>
+      <button class="hamburger" id="hamburger">☰</button>
+    </div>
+  </div>
+  <div class="mobileMenu" id="mobileMenu">
+    <a href="/">Início</a>
+    <a href="/rcc.html">A RCC</a>
+    <a href="/meugo.html">Meu GO Nota 10</a>
+    <a href="/campanhas.html">Campanhas</a>
+    <a href="/loja.html">Loja</a>
+    <a href="/sou.html">Sou Carismático</a>
+    <a href="/admin.html">Admin</a>
+  </div>
+</header>
+
+<main class="container">
+
+<div class="card hero">
+  <div>
+    <h1><span class="grad" id="pageTitle">Início</span></h1>
+    <p id="pageBody">Carregando conteúdo...</p>
+    <div style="height:14px"></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn primary" href="/sou.html">Sou Carismático</a>
+      <a class="btn gray" href="/meugo.html">Meu GO Nota 10</a>
+      <a class="btn" href="/campanhas.html">Campanhas</a>
+    </div>
+  </div>
+  <div class="card" style="padding:16px">
+    <div style="font-weight:950">Status do sistema</div>
+    <div class="small" style="margin-top:8px">
+      <span class="dot"></span>
+      <span id="statusText" style="margin-left:8px">Checando...</span>
+    </div>
+    <div style="height:10px"></div>
+    <div class="notice">Destaques e comunicados ficam aqui — editáveis pelo perfil <b>COMUNICAÇÃO</b>.</div>
+  </div>
+</div>
+
+<div class="grid3">
+  <div class="card mod">
+    <div class="small">Atalho</div>
+    <h3>Campanhas (Rifas)</h3>
+    <p>Escolha cotas, vincule vendedor e (em breve) pague via PIX/cartão.</p>
+  </div>
+  <div class="card mod">
+    <div class="small">Atalho</div>
+    <h3>Meu GO Nota 10</h3>
+    <p>Contribuição mensal. Relatórios por diocese e grupo de oração.</p>
+  </div>
+  <div class="card mod">
+    <div class="small">Acesso</div>
+    <h3>Área Administrativa</h3>
+    <p>Perfis e relatórios com segurança (RBAC) e seed automático do ADMIN.</p>
+  </div>
+</div>
+
+</main>
+
+<footer class="footer">RCC Maranhão • Plataforma Profissional v3.0</footer>
+<script src="/app.js"></script>
+</body>
+</html>
