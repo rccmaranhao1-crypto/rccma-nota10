@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  COMUNICACAO
+  TESOUREIRO
+  ARRECADACAO
+  USER
+}
+
+enum Diocese {
+  BACABAL
+  BALSAS
+  BREJO
+  CAROLINA
+  CAXIAS
+  COROATA
+  GRAJAU
+  IMPERATRIZ
+  PINHEIRO
+  SAO_LUIS_DO_MARANHAO
+  VIANA
+  ZE_DOCA
+  OUTRO
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  whatsapp      String   @unique
+  birthDate     DateTime
+  diocese       Diocese
+  city          String
+  prayerGroup   String
+  passwordHash  String
+  role          Role     @default(USER)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
